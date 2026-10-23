@@ -172,7 +172,6 @@ $$
 It labels periods above the 90th percentile of the full sample's valid rolling-volatility estimates as high-volatility periods. Breach rates are then compared across regimes.
 
 **Interpretation note:** Because the threshold is calculated using the full sample, this regime classification is retrospective and descriptive rather than a strictly real-time classification rule.
-
 ## 4. Research Design
 
 | Component | Implementation |
