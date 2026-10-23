@@ -39,45 +39,45 @@ Three situations are possible:
 
 Even when the overall breach rate is close to 5%, the model can still be unreliable if breaches cluster during market stress. Therefore, a complete evaluation must examine both how often breaches occur and how they are distributed over time.
 
-## 3. Mathematical Foundation
+## 3. Methodology
 
-### 3.1 Daily Returns
+### 3.1 Data and Return Construction
 
-Let $P_t$ denote the closing price on day $t$. The project calculates simple daily returns as
+The framework uses historical daily closing prices to calculate daily simple returns. Let \(P_t\) denote the closing price at time \(t\). The daily return is
 
 $$
-r_t = \frac{P_t-P_{t-1}}{P_{t-1}}
+r_t=\frac{P_t-P_{t-1}}{P_{t-1}}
 $$
 
-A return of $-0.02$ represents a daily loss of 2%.
-
-For VaR calculations, the corresponding loss is
+The corresponding loss is defined as
 
 $$
 L_t=-r_t
 $$
 
-A positive VaR threshold represents the magnitude of a loss, making the breach definition consistent across all three models.
+Positive losses represent negative returns, so a Value at Risk (VaR) forecast can be interpreted as a loss threshold.
 
-### 3.2 Value at Risk
+The analysis uses a rolling estimation window of \(W=500\) observations. At each forecast date, the models use historical observations available before that date to estimate the next-period VaR.
 
-Let $F_L$ be the cumulative distribution function of daily losses. The VaR at confidence level $\alpha$ is
+**Data limitation:** The input price series uses closing prices rather than adjusted closing prices. Corporate actions, such as stock splits and dividends, may therefore affect calculated returns. The results should be interpreted with this limitation in mind.
 
-$$
-\mathrm{VaR}_{\alpha}=F_L^{-1}(\alpha)
-$$
+### 3.2 Experimental Design
 
-For this project, $\alpha=0.95$. A breach occurs when
+The framework compares three VaR approaches:
 
-$$
-L_t>\mathrm{VaR}_{0.95,t}
-$$
+1. **Historical Simulation:** estimates the loss quantile empirically.
+2. **Gaussian Parametric VaR:** assumes normally distributed returns.
+3. **Student-t Parametric VaR:** accommodates heavier-tailed returns.
 
-The forecast is conditional on the information available in the preceding estimation window. The model does not know the next day's realized return when it produces its forecast.
+The models are evaluated using rolling out-of-sample forecasts at a 95% confidence level, with a 500-observation estimation window. Each forecast is compared with the subsequent realized loss.
+
+The expected breach probability at confidence level \(\alpha\) is \(1-\alpha\). For a 95% VaR forecast, the expected breach probability is 5%.
+
+The evaluation includes breach frequency, the Kupiec unconditional-coverage test, descriptive breach-clustering statistics, and comparisons across volatility regimes.
 
 ### 3.3 Historical Simulation VaR
 
-Historical simulation uses the empirical distribution of losses in a rolling estimation window:
+Historical Simulation estimates VaR from the empirical distribution of losses in the rolling estimation window:
 
 $$
 \widehat{\mathrm{VaR}}_{\alpha,t}
@@ -85,13 +85,15 @@ $$
 Q_{\alpha}\left(-r_{t-W},\ldots,-r_{t-1}\right)
 $$
 
-Here, \(W=500\) observations and \(Q_{\alpha}\) denotes the empirical loss quantile.
+Here, \(W=500\) observations and \(Q_{\alpha}\) denotes the empirical loss quantile corresponding to confidence level \(\alpha\).
 
-**Why use it?** It does not require returns to follow a Gaussian distribution. Its limitations include sensitivity to the chosen window and dependence on historical observations representing future conditions.
+**Why use it?** Historical Simulation does not require returns to follow a Gaussian distribution. Its limitations include sensitivity to the selected window and dependence on historical observations being representative of future market conditions.
 
 ### 3.4 Gaussian Parametric VaR
 
-The Gaussian model assumes returns follow a normal distribution with estimated mean \(\hat{\mu}_t\) and sample standard deviation \(\hat{\sigma}_t\):
+The Gaussian model assumes that returns follow a normal distribution. Let \(\hat{\mu}_t\) denote the estimated mean return and \(\hat{\sigma}_t\) the estimated standard deviation of returns in the rolling window.
+
+The VaR forecast is
 
 $$
 \widehat{\mathrm{VaR}}_{\alpha,t}
@@ -102,18 +104,21 @@ $$
 \right]
 $$
 
-Here, \(\Phi^{-1}\) is the inverse standard normal cumulative distribution function.
+Here, \(\Phi^{-1}\) is the inverse cumulative distribution function of the standard normal distribution.
 
-**Why use it?** It provides a simple, computationally efficient benchmark. Its performance can be affected when actual returns exhibit heavy tails, skewness, or changing volatility.
+**Why use it?** The Gaussian model is a simple, computationally efficient benchmark. Its performance can deteriorate when returns exhibit heavy tails, skewness, or changing volatility.
 
 ### 3.5 Student-t Parametric VaR
 
-The Student-t model allows heavier tails than the Gaussian model. This can be useful when extreme returns occur more frequently than a normal distribution would suggest.
+The Student-t model provides a heavier-tailed alternative to the Gaussian model. Let \(\nu_t>2\) denote the fitted degrees of freedom.
 
-Let \(\nu_t>2\) denote the fitted degrees of freedom. The implementation fits the Student-t distribution to standardized returns and rescales it to match the sample mean and standard deviation. The scale parameter is
+The implementation fits a Student-t distribution to standardized returns and rescales it to match the estimated return mean and standard deviation. The scale parameter is
 
 $$
-s_t=\hat{\sigma}_t\sqrt{\frac{\nu_t-2}{\nu_t}}
+s_t
+=
+\hat{\sigma}_t
+\sqrt{\frac{\nu_t-2}{\nu_t}}
 $$
 
 The resulting VaR forecast is
@@ -123,45 +128,49 @@ $$
 =
 -\left[
 \hat{\mu}_t+
-s_t T_{\nu_t}^{-1}(1-\alpha)
+s_tT_{\nu_t}^{-1}(1-\alpha)
 \right]
 $$
 
-Here, \(T_{\nu_t}^{-1}\) is the inverse cumulative distribution function of the Student-t distribution with \(\nu_t\) degrees of freedom. Requiring \(\nu_t>2\) ensures that the fitted distribution has finite variance.
+Here, \(T_{\nu_t}^{-1}\) denotes the inverse cumulative distribution function of the Student-t distribution with \(\nu_t\) degrees of freedom. Requiring \(\nu_t>2\) ensures that the fitted Student-t distribution has finite variance.
 
-**Why use it?** It provides a heavier-tailed alternative to the Gaussian benchmark. A better representation of tail shape does not guarantee accurate forecasts when the underlying market regime changes.
+**Why use it?** The Student-t model can better represent heavy-tailed returns than a Gaussian model. However, a heavier-tailed distribution does not guarantee accurate forecasts when market conditions change.
 
 ### 3.6 Breach Frequency and Expected Coverage
 
-Define the breach indicator as
+A VaR breach occurs when the realized loss exceeds the forecast VaR. Define the breach indicator as
 
 $$
 I_t=
 \begin{cases}
-1, & L_t>\mathrm{VaR}_{\alpha,t},\\
+1, & L_t>\widehat{\mathrm{VaR}}_{\alpha,t},\\
 0, & \text{otherwise}.
 \end{cases}
 $$
 
-The observed breach rate is
+For \(N\) evaluated forecasts, the observed breach rate is
 
 $$
-\widehat{p}=\frac{1}{N}\sum_{t=1}^{N}I_t
+\widehat{p}
+=
+\frac{1}{N}\sum_{t=1}^{N}I_t
 $$
 
-The expected breach probability is
+The expected breach probability under correct unconditional coverage is
 
 $$
 p_0=1-\alpha
 $$
 
-At 95% confidence, the target breach rate is 5%. The Kupiec unconditional-coverage test evaluates whether the observed breach frequency is statistically consistent with this target.
+At 95% confidence, the target breach rate is 5%.
 
-A small p-value indicates evidence against the target breach frequency. It does not, by itself, identify the reason for the mismatch or establish whether the model is useful for every risk-management purpose.
+The Kupiec unconditional-coverage test evaluates whether the observed breach frequency is statistically consistent with the expected breach probability. A small p-value provides evidence against the target unconditional coverage rate. A non-significant result does not prove that the model is correct or that it performs well in every market condition.
+
+The framework also reports descriptive breach-clustering statistics, including the number of breach clusters and the maximum consecutive breach run. These statistics describe the temporal pattern of breaches but do not constitute a formal independence or conditional-coverage test.
 
 ### 3.7 Volatility Regimes
 
-The project calculates rolling volatility using the previous 20 return observations, including the current observation:
+The framework calculates rolling volatility using the standard deviation of the previous 20 daily returns, including the current observation:
 
 $$
 \hat{\sigma}_{20,t}
@@ -169,9 +178,9 @@ $$
 \mathrm{SD}(r_{t-19},\ldots,r_t)
 $$
 
-It labels periods above the 90th percentile of the full sample's valid rolling-volatility estimates as high-volatility periods. Breach rates are then compared across regimes.
+It classifies observations above the 90th percentile of the full sample's valid rolling-volatility estimates as high-volatility periods. The remaining observations are classified as normal-volatility periods. Breach rates are then compared between these regimes for each VaR model.
 
-**Interpretation note:** Because the threshold is calculated using the full sample, this regime classification is retrospective and descriptive rather than a strictly real-time classification rule.
+**Interpretation note:** Because the volatility threshold is estimated using the full sample, this classification is retrospective and descriptive rather than a strictly real-time regime signal. The regime comparison helps identify whether model performance differs across observed volatility conditions, but it does not establish causality.
 ## 4. Research Design
 
 | Component | Implementation |
