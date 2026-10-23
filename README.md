@@ -39,71 +39,72 @@ Three situations are possible:
 
 Even when the overall breach rate is close to 5%, the model can still be unreliable if breaches cluster during market stress. Therefore, a complete evaluation must examine both how often breaches occur and how they are distributed over time.
 
-## 3. Mathematical Foundation
+### 3. Mathematical Foundation
 
 ### 3.1 Daily Returns
 
-Let \(P_t\) denote the closing price on day \(t\). The project calculates simple daily returns as
+Let $P_t$ denote the closing price on day $t$. The project calculates simple daily returns as
 
-\[
+$$
 r_t = \frac{P_t-P_{t-1}}{P_{t-1}}
-\]
+$$
 
-A return of \(-0.02\) represents a daily loss of 2%.
+A return of $-0.02$ represents a daily loss of 2%.
 
 For VaR calculations, the corresponding loss is
 
-\[
+$$
 L_t=-r_t
-\]
+$$
 
 A positive VaR threshold represents the magnitude of a loss, making the breach definition consistent across all three models.
 
 ### 3.2 Value at Risk
 
-Let \(F_L\) be the cumulative distribution function of daily losses. The VaR at confidence level \(\alpha\) is
+Let $F_L$ be the cumulative distribution function of daily losses. The VaR at confidence level $\alpha$ is
 
-\[
-\operatorname{VaR}_{\alpha}
-=F_L^{-1}(\alpha)
-\]
+$$
+\operatorname{VaR}_{\alpha}=F_L^{-1}(\alpha)
+$$
 
-For this project, \(\alpha=0.95\). A breach occurs when
+For this project, $\alpha=0.95$. A breach occurs when
 
-\[
+$$
 L_t>\operatorname{VaR}_{0.95,t}
-\]
+$$
 
 The forecast is conditional on the information available in the preceding estimation window. The model does not know the next day's realized return when it produces its forecast.
 
 ### 3.3 Historical Simulation VaR
 
-Historical simulation uses the empirical distribution of losses in a rolling estimation window.
+Historical simulation uses the empirical distribution of losses in a rolling estimation window:
 
-\[
+$$
 \widehat{\operatorname{VaR}}_{\alpha,t}
-=Q_{\alpha}\left(
+=
+Q_{\alpha}\left(
 -r_{t-W},\ldots,-r_{t-1}
 \right)
-\]
+$$
 
-Here, \(W=500\) observations and \(Q_\alpha\) is the empirical loss quantile.
+Here, $W=500$ observations and $Q_{\alpha}$ denotes the empirical loss quantile.
 
 **Why use it?** It does not require returns to follow a Gaussian distribution. Its limitations include sensitivity to the chosen window and dependence on historical observations representing future conditions.
 
 ### 3.4 Gaussian Parametric VaR
 
-The Gaussian model assumes returns follow a normal distribution with estimated mean \(\hat{\mu}_t\) and sample standard deviation \(\hat{\sigma}_t\).
+The Gaussian model assumes returns follow a normal distribution with estimated mean $\hat{\mu}_t$ and sample standard deviation $\hat{\sigma}_t$:
 
-\[
+$$
 \widehat{\operatorname{VaR}}_{\alpha,t}
-=-\left(
+=
+-\left[
 \hat{\mu}_t+
 \hat{\sigma}_t\Phi^{-1}(1-\alpha)
-\right)
-\]
+\right]
+$$
 
-Here, \(\Phi^{-1}\) is the inverse standard normal cumulative distribution function.
+Here, $\Phi^{-1}$ is the inverse standard normal cumulative distribution function.
 
 **Why use it?** It provides a simple, computationally efficient benchmark. Its performance can be affected when actual returns exhibit heavy tails, skewness, or changing volatility.
 
@@ -111,65 +112,68 @@ Here, \(\Phi^{-1}\) is the inverse standard normal cumulative distribution funct
 
 The Student-t model allows heavier tails than the Gaussian model. This can be useful when extreme returns occur more frequently than a normal distribution would suggest.
 
-The implementation fits the degrees of freedom \(\nu\) to standardized returns and rescales the fitted distribution to match the sample mean and standard deviation:
+Let $\nu_t>2$ denote the fitted degrees of freedom. The implementation fits the Student-t distribution to standardized returns and rescales it to match the sample mean and standard deviation. The scale parameter is
 
-\[
-s_t=\hat{\sigma}_t
-\sqrt{\frac{\nu-2}{\nu}}
-\]
+$$
+s_t=\hat{\sigma}_t\sqrt{\frac{\nu_t-2}{\nu_t}}
+$$
 
-\[
+The resulting VaR forecast is
+
+$$
 \widehat{\operatorname{VaR}}_{\alpha,t}
-=-\left(
-\hat{\mu}_t+s_t\,t_{\nu}^{-1}(1-\alpha)
-\right)
-\]
+=
+-\left[
+\hat{\mu}_t+
+s_t\,t_{\nu_t}^{-1}(1-\alpha)
+\right]
+$$
 
-where \(t_{\nu}^{-1}\) is the inverse Student-t cumulative distribution function. The fitted degrees of freedom must exceed 2 so that the variance is finite.
+where $t_{\nu_t}^{-1}$ is the inverse cumulative distribution function of the Student-t distribution with $\nu_t$ degrees of freedom. Requiring $\nu_t>2$ ensures that the fitted distribution has finite variance.
 
 **Why use it?** It provides a heavier-tailed alternative to the Gaussian benchmark. A better representation of tail shape does not guarantee accurate forecasts when the underlying market regime changes.
 
 ### 3.6 Breach Frequency and Expected Coverage
 
-Define the breach indicator
+Define the breach indicator as
 
-\[
+$$
 I_t=
 \begin{cases}
-1,&L_t>\operatorname{VaR}_{\alpha,t}\\
-0,&\text{otherwise}
+1, & L_t>\operatorname{VaR}_{\alpha,t},\\
+0, & \text{otherwise}.
 \end{cases}
-\]
+$$
 
 The observed breach rate is
 
-\[
+$$
 \widehat{p}=\frac{1}{N}\sum_{t=1}^{N}I_t
-\]
+$$
 
 The expected breach probability is
 
-\[
+$$
 p_0=1-\alpha
-\]
+$$
 
-At 95% confidence, the target is 5%. The Kupiec unconditional-coverage test evaluates whether the observed breach frequency is statistically consistent with this target.
+At 95% confidence, the target breach rate is 5%. The Kupiec unconditional-coverage test evaluates whether the observed breach frequency is statistically consistent with this target.
 
 A small p-value indicates evidence against the target breach frequency. It does not, by itself, identify the reason for the mismatch or establish whether the model is useful for every risk-management purpose.
 
 ### 3.7 Volatility Regimes
 
-The project calculates rolling volatility from the previous 20 return observations:
+The project calculates rolling volatility using the previous 20 return observations, including the current observation:
 
-\[
+$$
 \widehat{\sigma}_{20,t}
-=\operatorname{SD}
-(r_{t-19},\ldots,r_t)
-\]
+=
+\operatorname{SD}(r_{t-19},\ldots,r_t)
+$$
 
 It labels periods above the 90th percentile of the full sample's valid rolling-volatility estimates as high-volatility periods. Breach rates are then compared across regimes.
 
-This threshold is **retrospective** because it uses the full sample. It is suitable for exploratory analysis, but it is not a real-time stress detector that could have been applied without future information.
+**Interpretation note:** Because the threshold is calculated using the full sample, this regime classification is retrospective and descriptive rather than a strictly real-time classification rule.
 
 ## 4. Research Design
 
