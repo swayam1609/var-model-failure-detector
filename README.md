@@ -39,7 +39,7 @@ Three situations are possible:
 
 Even when the overall breach rate is close to 5%, the model can still be unreliable if breaches cluster during market stress. Therefore, a complete evaluation must examine both how often breaches occur and how they are distributed over time.
 
-### 3. Mathematical Foundation
+## 3. Mathematical Foundation
 
 ### 3.1 Daily Returns
 
@@ -64,13 +64,13 @@ A positive VaR threshold represents the magnitude of a loss, making the breach d
 Let $F_L$ be the cumulative distribution function of daily losses. The VaR at confidence level $\alpha$ is
 
 $$
-\operatorname{VaR}_{\alpha}=F_L^{-1}(\alpha)
+\mathrm{VaR}_{\alpha}=F_L^{-1}(\alpha)
 $$
 
 For this project, $\alpha=0.95$. A breach occurs when
 
 $$
-L_t>\operatorname{VaR}_{0.95,t}
+L_t>\mathrm{VaR}_{0.95,t}
 $$
 
 The forecast is conditional on the information available in the preceding estimation window. The model does not know the next day's realized return when it produces its forecast.
@@ -80,11 +80,9 @@ The forecast is conditional on the information available in the preceding estima
 Historical simulation uses the empirical distribution of losses in a rolling estimation window:
 
 $$
-\widehat{\operatorname{VaR}}_{\alpha,t}
+\widehat{\mathrm{VaR}}_{\alpha,t}
 =
-Q_{\alpha}\left(
--r_{t-W},\ldots,-r_{t-1}
-\right)
+Q_{\alpha}\left(-r_{t-W},\ldots,-r_{t-1}\right)
 $$
 
 Here, $W=500$ observations and $Q_{\alpha}$ denotes the empirical loss quantile.
@@ -96,7 +94,7 @@ Here, $W=500$ observations and $Q_{\alpha}$ denotes the empirical loss quantile.
 The Gaussian model assumes returns follow a normal distribution with estimated mean $\hat{\mu}_t$ and sample standard deviation $\hat{\sigma}_t$:
 
 $$
-\widehat{\operatorname{VaR}}_{\alpha,t}
+\widehat{\mathrm{VaR}}_{\alpha,t}
 =
 -\left[
 \hat{\mu}_t+
@@ -121,15 +119,15 @@ $$
 The resulting VaR forecast is
 
 $$
-\widehat{\operatorname{VaR}}_{\alpha,t}
+\widehat{\mathrm{VaR}}_{\alpha,t}
 =
 -\left[
 \hat{\mu}_t+
-s_t\,t_{\nu_t}^{-1}(1-\alpha)
+s_t\,T_{\nu_t}^{-1}(1-\alpha)
 \right]
 $$
 
-where $t_{\nu_t}^{-1}$ is the inverse cumulative distribution function of the Student-t distribution with $\nu_t$ degrees of freedom. Requiring $\nu_t>2$ ensures that the fitted distribution has finite variance.
+where $T_{\nu_t}^{-1}$ is the inverse cumulative distribution function of the Student-t distribution with $\nu_t$ degrees of freedom. Requiring $\nu_t>2$ ensures that the fitted distribution has finite variance.
 
 **Why use it?** It provides a heavier-tailed alternative to the Gaussian benchmark. A better representation of tail shape does not guarantee accurate forecasts when the underlying market regime changes.
 
@@ -140,7 +138,7 @@ Define the breach indicator as
 $$
 I_t=
 \begin{cases}
-1, & L_t>\operatorname{VaR}_{\alpha,t},\\
+1, & L_t>\mathrm{VaR}_{\alpha,t},\\
 0, & \text{otherwise}.
 \end{cases}
 $$
@@ -166,9 +164,9 @@ A small p-value indicates evidence against the target breach frequency. It does 
 The project calculates rolling volatility using the previous 20 return observations, including the current observation:
 
 $$
-\widehat{\sigma}_{20,t}
+\hat{\sigma}_{20,t}
 =
-\operatorname{SD}(r_{t-19},\ldots,r_t)
+\mathrm{SD}(r_{t-19},\ldots,r_t)
 $$
 
 It labels periods above the 90th percentile of the full sample's valid rolling-volatility estimates as high-volatility periods. Breach rates are then compared across regimes.
