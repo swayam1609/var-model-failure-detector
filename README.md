@@ -85,13 +85,13 @@ $$
 Q_{\alpha}\left(-r_{t-W},\ldots,-r_{t-1}\right)
 $$
 
-Here, $W=500$ observations and $Q_{\alpha}$ denotes the empirical loss quantile.
+Here, \(W=500\) observations and \(Q_{\alpha}\) denotes the empirical loss quantile.
 
 **Why use it?** It does not require returns to follow a Gaussian distribution. Its limitations include sensitivity to the chosen window and dependence on historical observations representing future conditions.
 
 ### 3.4 Gaussian Parametric VaR
 
-The Gaussian model assumes returns follow a normal distribution with estimated mean $\hat{\mu}_t$ and sample standard deviation $\hat{\sigma}_t$:
+The Gaussian model assumes returns follow a normal distribution with estimated mean \(\hat{\mu}_t\) and sample standard deviation \(\hat{\sigma}_t\):
 
 $$
 \widehat{\mathrm{VaR}}_{\alpha,t}
@@ -102,7 +102,7 @@ $$
 \right]
 $$
 
-Here, $\Phi^{-1}$ is the inverse standard normal cumulative distribution function.
+Here, \(\Phi^{-1}\) is the inverse standard normal cumulative distribution function.
 
 **Why use it?** It provides a simple, computationally efficient benchmark. Its performance can be affected when actual returns exhibit heavy tails, skewness, or changing volatility.
 
@@ -110,7 +110,7 @@ Here, $\Phi^{-1}$ is the inverse standard normal cumulative distribution functio
 
 The Student-t model allows heavier tails than the Gaussian model. This can be useful when extreme returns occur more frequently than a normal distribution would suggest.
 
-Let $\nu_t>2$ denote the fitted degrees of freedom. The implementation fits the Student-t distribution to standardized returns and rescales it to match the sample mean and standard deviation. The scale parameter is
+Let \(\nu_t>2\) denote the fitted degrees of freedom. The implementation fits the Student-t distribution to standardized returns and rescales it to match the sample mean and standard deviation. The scale parameter is
 
 $$
 s_t=\hat{\sigma}_t\sqrt{\frac{\nu_t-2}{\nu_t}}
@@ -127,7 +127,7 @@ s_t T_{\nu_t}^{-1}(1-\alpha)
 \right]
 $$
 
-Here, $T_{\nu_t}^{-1}$ is the inverse cumulative distribution function of the Student-t distribution with $\nu_t$ degrees of freedom. Requiring $\nu_t>2$ ensures that the fitted distribution has finite variance.
+Here, \(T_{\nu_t}^{-1}\) is the inverse cumulative distribution function of the Student-t distribution with \(\nu_t\) degrees of freedom. Requiring \(\nu_t>2\) ensures that the fitted distribution has finite variance.
 
 **Why use it?** It provides a heavier-tailed alternative to the Gaussian benchmark. A better representation of tail shape does not guarantee accurate forecasts when the underlying market regime changes.
 
