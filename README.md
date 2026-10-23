@@ -123,11 +123,11 @@ $$
 =
 -\left[
 \hat{\mu}_t+
-s_t\,T_{\nu_t}^{-1}(1-\alpha)
+s_t T_{\nu_t}^{-1}(1-\alpha)
 \right]
 $$
 
-where $T_{\nu_t}^{-1}$ is the inverse cumulative distribution function of the Student-t distribution with $\nu_t$ degrees of freedom. Requiring $\nu_t>2$ ensures that the fitted distribution has finite variance.
+Here, $T_{\nu_t}^{-1}$ is the inverse cumulative distribution function of the Student-t distribution with $\nu_t$ degrees of freedom. Requiring $\nu_t>2$ ensures that the fitted distribution has finite variance.
 
 **Why use it?** It provides a heavier-tailed alternative to the Gaussian benchmark. A better representation of tail shape does not guarantee accurate forecasts when the underlying market regime changes.
 
