@@ -1,0 +1,4 @@
+model,observations,breaches,observed_rate,expected_rate,lr_statistic,p_value,cluster_breach_clusters,cluster_adjacent_breach_pairs,cluster_max_consecutive_breaches,test_result
+historical,6017,307,0.05102210403855742,0.050000000000000044,0.13148994844204687,0.7168921839367247,268,39,4,Do not reject target coverage
+gaussian,6017,258,0.0428785108858235,0.050000000000000044,6.735873149360302,0.009449296900844074,225,33,3,Reject target coverage
+student_t,6017,269,0.04470666445072295,0.050000000000000044,3.6747102741392794,0.055243854189556976,232,37,3,Do not reject target coverage
